@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor.Animations;
 using VRC.SDK3.Avatars.Components;
 
-public partial class Test_mat_tex : EditorWindow
+public partial class Cerberus : EditorWindow
 {
     private GameObject selectedPrefab;
     private Dictionary<Material, List<GameObject>> materialUsage = new Dictionary<Material, List<GameObject>>();
@@ -15,10 +15,10 @@ public partial class Test_mat_tex : EditorWindow
     private Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>> animatorClips = new Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>>();
     private bool isFoldoutAnimator = true;
 
-    [MenuItem("CHISENOTE/Test_window_MatTex")]
+    [MenuItem("CHISENOTE/Cerberus")]
     private static void ShowWindow()
     {
-        var window = GetWindow<Test_mat_tex>("Cerberus");
+        var window = GetWindow<Cerberus>("Cerberus");
         window.Show();
     }
 
