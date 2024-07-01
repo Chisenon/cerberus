@@ -14,6 +14,7 @@ public partial class Cerberus : EditorWindow
     private Dictionary<AnimatorController, List<string>> animatorUsage = new Dictionary<AnimatorController, List<string>>();
     private Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>> animatorClips = new Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>>();
     private bool isFoldoutAnimator = true;
+    private Color fixedBackgroundColor = new Color32(87, 87, 87, 255); // #575757
 
     [MenuItem("CHISENOTE/Cerberus")]
     private static void ShowWindow()
@@ -29,6 +30,8 @@ public partial class Cerberus : EditorWindow
         if (GUILayout.Button("Check Prefab"))
         {
             ClearDictionaries();
+            isFoldoutMaterials = false;
+            isFoldoutAnimator = false;
             HashSet<AnimationClip> uniqueClips = new HashSet<AnimationClip>();
 
             if (selectedPrefab != null)
@@ -36,10 +39,6 @@ public partial class Cerberus : EditorWindow
                 Debug.Log("Selected object: " + selectedPrefab.name);
                 ProcessRenderers();
                 ProcessAvatarDescriptor(uniqueClips);
-                // Debug.Log("Number of unique materials: " + materialUsage.Count);
-                // Debug.Log("Number of unique Textures: " + materialTextures.Count);
-                // Debug.Log("Number of unique Animator Controllers: " + animatorUsage.Count);
-                // Debug.Log("Number of unique Animation Clips: " + uniqueClips.Count);
             }
         }
 
@@ -121,20 +120,34 @@ public partial class Cerberus : EditorWindow
         scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
         GUILayout.BeginHorizontal();
 
-        float scrollbarWidth = 15.0f;  // スクロールバーの幅を定義
-        float halfWidth = (position.width - scrollbarWidth) / 2 - 4;  // スクロールバーの幅を引いたサイズ
+        float scrollbarWidth = 15.0f;
+        float halfWidth = (position.width - scrollbarWidth) / 2 - 4;
 
         DisplayMaterialsAndTextures(halfWidth);
         DisplayAnimatorsAndAnimations(halfWidth);
 
         GUILayout.EndHorizontal();
         EditorGUILayout.EndScrollView();
+
+        // 取り合えずボタンを追加してみる
+        GUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("Custom Button"))
+        {
+            // ボタンが押された時の処理
+            Debug.Log("Custom Button clicked!");
+        }
+
+        GUILayout.EndHorizontal();
     }
+
 
     private void DisplayMaterialsAndTextures(float width)
     {
         EditorGUILayout.BeginVertical(GUILayout.Width(width));
-        isFoldoutMaterials = EditorGUILayout.Foldout(isFoldoutMaterials, "Materials and Textures");
+        Rect foldoutRect = EditorGUILayout.GetControlRect();
+        EditorGUI.DrawRect(foldoutRect, fixedBackgroundColor);
+        isFoldoutMaterials = EditorGUI.Foldout(foldoutRect, isFoldoutMaterials, "Materials and Textures", true);
         if (isFoldoutMaterials)
         {
             foreach (var material in materialUsage.Keys)
@@ -156,7 +169,9 @@ public partial class Cerberus : EditorWindow
     private void DisplayAnimatorsAndAnimations(float width)
     {
         EditorGUILayout.BeginVertical(GUILayout.Width(width));
-        isFoldoutAnimator = EditorGUILayout.Foldout(isFoldoutAnimator, "Animator and Animation");
+        Rect foldoutRect = EditorGUILayout.GetControlRect();
+        EditorGUI.DrawRect(foldoutRect, fixedBackgroundColor);
+        isFoldoutAnimator = EditorGUI.Foldout(foldoutRect, isFoldoutAnimator, "Animator and Animation", true);
         if (isFoldoutAnimator)
         {
             foreach (var animatorController in animatorUsage.Keys)
@@ -173,7 +188,7 @@ public partial class Cerberus : EditorWindow
                         if (!clip.name.Contains("proxy"))
                         {
                             EditorGUILayout.BeginHorizontal();
-                            EditorGUILayout.LabelField(clip.name, GUILayout.Width(250));
+                            EditorGUILayout.LabelField(clip.name, GUILayout.Width(170));
                             EditorGUILayout.ObjectField(clip, typeof(AnimationClip), false);
                             EditorGUILayout.EndHorizontal();
                         }
