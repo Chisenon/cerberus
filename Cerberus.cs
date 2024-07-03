@@ -15,12 +15,18 @@ public partial class Cerberus : EditorWindow
     private Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>> animatorClips = new Dictionary<AnimatorController, Dictionary<string, HashSet<AnimationClip>>>();
     private bool isFoldoutAnimator = true;
     private Color fixedBackgroundColor = new Color32(87, 87, 87, 255); // #575757
+    private DefaultAsset selectedFolder;
 
     [MenuItem("CHISENOTE/Cerberus")]
     private static void ShowWindow()
     {
         var window = GetWindow<Cerberus>("Cerberus");
         window.Show();
+    }
+
+    private void OnEnable()
+    {
+        selectedFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>("Assets");
     }
 
     private void OnGUI()
@@ -129,18 +135,26 @@ public partial class Cerberus : EditorWindow
         GUILayout.EndHorizontal();
         EditorGUILayout.EndScrollView();
 
-        // 取り合えずボタンを追加してみる
-        GUILayout.BeginHorizontal();
+        GUILayout.BeginVertical();
 
-        if (GUILayout.Button("Custom Button"))
+        selectedFolder = (DefaultAsset)EditorGUILayout.ObjectField("Select Folder", selectedFolder, typeof(DefaultAsset), false);
+
+        if (GUILayout.Button("Save Button"))
         {
             // ボタンが押された時の処理
-            Debug.Log("Custom Button clicked!");
+            if (selectedFolder != null)
+            {
+                string folderPath = AssetDatabase.GetAssetPath(selectedFolder);
+                Debug.Log("Selected folder path: " + folderPath);
+            }
+            else
+            {
+                Debug.Log("No folder selected.");
+            }
         }
 
-        GUILayout.EndHorizontal();
+        GUILayout.EndVertical();
     }
-
 
     private void DisplayMaterialsAndTextures(float width)
     {
