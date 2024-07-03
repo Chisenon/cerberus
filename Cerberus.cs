@@ -27,6 +27,8 @@ public partial class Cerberus : EditorWindow
     private void OnEnable()
     {
         selectedFolder = AssetDatabase.LoadAssetAtPath<DefaultAsset>("Assets");
+        isFoldoutMaterials = true;
+        isFoldoutAnimator = true;
     }
 
     private void OnGUI()
@@ -36,8 +38,6 @@ public partial class Cerberus : EditorWindow
         if (GUILayout.Button("Check Prefab"))
         {
             ClearDictionaries();
-            isFoldoutMaterials = false;
-            isFoldoutAnimator = false;
             HashSet<AnimationClip> uniqueClips = new HashSet<AnimationClip>();
 
             if (selectedPrefab != null)
@@ -137,19 +137,36 @@ public partial class Cerberus : EditorWindow
 
         GUILayout.BeginVertical();
 
-        selectedFolder = (DefaultAsset)EditorGUILayout.ObjectField("Select Folder", selectedFolder, typeof(DefaultAsset), false);
+        selectedFolder = (DefaultAsset)EditorGUILayout.ObjectField("Save Folder", selectedFolder, typeof(DefaultAsset), false);
 
-        if (GUILayout.Button("Save Button"))
+        if (GUILayout.Button("Save"))
         {
-            // ボタンが押された時の処理
-            if (selectedFolder != null)
+            if (selectedFolder != null && selectedPrefab != null)
             {
                 string folderPath = AssetDatabase.GetAssetPath(selectedFolder);
-                Debug.Log("Selected folder path: " + folderPath);
+                string targetFolderPath = System.IO.Path.Combine(folderPath, selectedPrefab.name);
+
+                // Check if the folder already exists
+                if (!AssetDatabase.IsValidFolder(targetFolderPath))
+                {
+                    AssetDatabase.CreateFolder(folderPath, selectedPrefab.name);
+                    Debug.Log("Created folder: " + targetFolderPath);
+
+                    string[] subFolders = { "texture", "material", "animation", "controller" };
+                    foreach (string subFolder in subFolders)
+                    {
+                        AssetDatabase.CreateFolder(targetFolderPath, subFolder);
+                        Debug.Log($"Created {subFolder} folder inside: {targetFolderPath}");
+                    }
+                }
+                else
+                {
+                    Debug.Log($"Folder already exists: {targetFolderPath}. No new folder created.");
+                }
             }
             else
             {
-                Debug.Log("No folder selected.");
+                Debug.Log("No folder or prefab selected.");
             }
         }
 
