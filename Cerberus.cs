@@ -164,6 +164,7 @@ public partial class Cerberus : EditorWindow
                     Debug.Log($"Folder already exists: {targetFolderPath}. No new folder created.");
                 }
 
+                CopyTextures(targetFolderPath);
                 CopyAndRelinkMaterials(targetFolderPath);
             }
             else
@@ -269,6 +270,19 @@ public partial class Cerberus : EditorWindow
         }
     }
 
+    private void CopyTextures(string targetFolderPath)
+    {
+        foreach (var material in materialTextures.Keys)
+        {
+            foreach (var texture in materialTextures[material])
+            {
+                string texturePath = AssetDatabase.GetAssetPath(texture);
+                string textureCopyPath = Path.Combine(targetFolderPath, "texture", Path.GetFileName(texturePath));
+                AssetDatabase.CopyAsset(texturePath, textureCopyPath);
+            }
+        }
+    }
+
     private void CopyAndRelinkMaterials(string targetFolderPath)
     {
         foreach (var material in materialUsage.Keys)
@@ -277,27 +291,26 @@ public partial class Cerberus : EditorWindow
             string materialCopyPath = Path.Combine(targetFolderPath, "material", Path.GetFileName(materialPath));
             AssetDatabase.CopyAsset(materialPath, materialCopyPath);
 
-            foreach (var texture in materialTextures[material])
-            {
-                string texturePath = AssetDatabase.GetAssetPath(texture);
-                string textureCopyPath = Path.Combine(targetFolderPath, "texture", Path.GetFileName(texturePath));
-                AssetDatabase.CopyAsset(texturePath, textureCopyPath);
-            }
-
             Material copiedMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialCopyPath);
-            foreach (var property in copiedMaterial.GetTexturePropertyNameIDs())
-            {
-                Texture texture = copiedMaterial.GetTexture(property);
-                if (texture != null)
-                {
-                    string newTexturePath = Path.Combine(targetFolderPath, "texture", Path.GetFileName(AssetDatabase.GetAssetPath(texture)));
-                    Texture newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
-                    copiedMaterial.SetTexture(property, newTexture);
-                }
-            }
+            RelinkTextures(copiedMaterial, targetFolderPath);
         }
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    private void RelinkTextures(Material material, string targetFolderPath)
+    {
+        foreach (var property in material.GetTexturePropertyNameIDs())
+        {
+            Texture texture = material.GetTexture(property);
+            if (texture != null)
+            {
+                string textureName = Path.GetFileName(AssetDatabase.GetAssetPath(texture));
+                string newTexturePath = Path.Combine(targetFolderPath, "texture", textureName);
+                Texture newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
+                material.SetTexture(property, newTexture);
+            }
+        }
     }
 }
