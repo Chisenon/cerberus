@@ -1,8 +1,9 @@
-using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 using UnityEditor.Animations;
+using UnityEngine;
 using VRC.SDK3.Avatars.Components;
+using System.Collections.Generic;
+using System.IO;
 
 public partial class Cerberus : EditorWindow
 {
@@ -144,15 +145,14 @@ public partial class Cerberus : EditorWindow
             if (selectedFolder != null && selectedPrefab != null)
             {
                 string folderPath = AssetDatabase.GetAssetPath(selectedFolder);
-                string targetFolderPath = System.IO.Path.Combine(folderPath, selectedPrefab.name);
+                string targetFolderPath = Path.Combine(folderPath, selectedPrefab.name);
 
-                // Check if the folder already exists
                 if (!AssetDatabase.IsValidFolder(targetFolderPath))
                 {
                     AssetDatabase.CreateFolder(folderPath, selectedPrefab.name);
                     Debug.Log("Created folder: " + targetFolderPath);
 
-                    string[] subFolders = { "texture", "material", "animation", "controller" };
+                    string[] subFolders = { "texture", "material" };
                     foreach (string subFolder in subFolders)
                     {
                         AssetDatabase.CreateFolder(targetFolderPath, subFolder);
@@ -163,6 +163,8 @@ public partial class Cerberus : EditorWindow
                 {
                     Debug.Log($"Folder already exists: {targetFolderPath}. No new folder created.");
                 }
+
+                CopyAndRelinkMaterials(targetFolderPath);
             }
             else
             {
@@ -265,5 +267,37 @@ public partial class Cerberus : EditorWindow
                 ExploreBlendTree(childBlendTree, uniqueClips, controllerClips);
             }
         }
+    }
+
+    private void CopyAndRelinkMaterials(string targetFolderPath)
+    {
+        foreach (var material in materialUsage.Keys)
+        {
+            string materialPath = AssetDatabase.GetAssetPath(material);
+            string materialCopyPath = Path.Combine(targetFolderPath, "material", Path.GetFileName(materialPath));
+            AssetDatabase.CopyAsset(materialPath, materialCopyPath);
+
+            foreach (var texture in materialTextures[material])
+            {
+                string texturePath = AssetDatabase.GetAssetPath(texture);
+                string textureCopyPath = Path.Combine(targetFolderPath, "texture", Path.GetFileName(texturePath));
+                AssetDatabase.CopyAsset(texturePath, textureCopyPath);
+            }
+
+            Material copiedMaterial = AssetDatabase.LoadAssetAtPath<Material>(materialCopyPath);
+            foreach (var property in copiedMaterial.GetTexturePropertyNameIDs())
+            {
+                Texture texture = copiedMaterial.GetTexture(property);
+                if (texture != null)
+                {
+                    string newTexturePath = Path.Combine(targetFolderPath, "texture", Path.GetFileName(AssetDatabase.GetAssetPath(texture)));
+                    Texture newTexture = AssetDatabase.LoadAssetAtPath<Texture>(newTexturePath);
+                    copiedMaterial.SetTexture(property, newTexture);
+                }
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
     }
 }
